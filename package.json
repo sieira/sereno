@@ -1,0 +1,32 @@
+{
+  "name": "sereno",
+  "version": "0.0.1",
+  "description": "A RESTful key wallet extension of passport",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sieira/sereno.git"
+  },
+  "keywords": [
+    "express",
+    "connect",
+    "password",
+    "wallet"
+  ],
+  "author": "Luis Sieira <luis.sieira@spacebar.fr> (http://www.spacebar.fr/)",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/sieira/sereno/issues"
+  },
+  "homepage": "https://github.com/sieira/sereno",
+  "dependencies": {
+    "node-cryptojs-aes": "^0.4.0"
+  },
+  "devDependencies": {
+    "chai": "^3.2.0",
+    "mocha": "^2.2.5"
+  }
+}
