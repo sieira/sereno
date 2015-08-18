@@ -2,7 +2,7 @@
   "name": "sereno",
   "version": "0.0.1",
   "description": "A RESTful key wallet extension of passport",
-  "main": "index.js",
+  "main": "./lib",
   "scripts": {
     "test": "make test"
   },
@@ -23,10 +23,17 @@
   },
   "homepage": "https://github.com/sieira/sereno",
   "dependencies": {
-    "node-cryptojs-aes": "^0.4.0"
+    "node-cryptojs-aes": "^0.4.0",
+    "sha1": "^1.1.1"
   },
   "devDependencies": {
     "chai": "^3.2.0",
-    "mocha": "^2.2.5"
+    "express": "^4.13.3",
+    "http": "0.0.0",
+    "mocha": "^2.2.5",
+    "mongoose": "^4.1.3",
+    "passport": "^0.2.2",
+    "passport-local": "^1.0.0",
+    "passport-strategy": "^1.0.0"
   }
 }

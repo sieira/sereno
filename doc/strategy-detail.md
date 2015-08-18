@@ -33,7 +33,7 @@ Using a REST architecture will mean that the application server will not keep tr
 
 ## Step 1
 //TODO
-1. The server generates a master key, this key will be used to encrypt the
+1. The server generates a session key, this key will be used to encrypt the
    generated key which will be used to encrypt passwords
 2. This key has to be renewed every now and then, and the database has to update
 
