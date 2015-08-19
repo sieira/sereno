@@ -4,13 +4,9 @@ Using a REST architecture will mean that the application server will not keep tr
   * This option is discarded, it would result in the encrypted information lost anytime the server stops (because it will loose the key), or in the key being known by the server manager, or in this same key being stored in the database along with the data it encrypted.
  2. The key has to be different for each user and thus, be deductible from the users given information, leading to two possibilities:
   1. The user knows and transmits both his password and this key. In that case, the user has to be requested the key each time he wants to access the data.
-  2. The server stores this key, leading to the same problem mentioned in point one, that the key will be (at least *during the user's session*), stored in the same database than the information it encrypts.
+  2. The server stores this key, leading to the same problem mentioned in point one, that the key will be (at least **during the user's session**), stored in the same database than the information it encrypts.
 
   Whereas in the first case the key first key has to be persistent (it's used to encrypt and decrypt the data), the second one
-
- (the )
-
- And the key used for it has to be different for each user.
 
 # Considerations
   1. The database will keep all the user mailbox passwords.
@@ -32,17 +28,16 @@ Using a REST architecture will mean that the application server will not keep tr
  * sc(mk, mh(uk)) = symmetric algorithm
 
 ## Step 1
-//TODO
-1. The server generates a session key, this key will be used to encrypt the
+ 1. The server generates a session key, this key will be used to encrypt the
    generated key which will be used to encrypt passwords
-2. This key has to be renewed every now and then, and the database has to update
+ 2. This key has to be renewed every now and then, and the database has to update
 
 ## Step 2
 When the user logs in
-1. The client requests to login sending his key through SSL
-2. The application server calculates the hash of the key and checks with the database
-3. If the login succeeds, it calculates a second hash (different algorithm) and keeps it private
-4. The server generates a token and sends it to the client
+ 1. The client requests to login sending his key through SSL
+ 2. The application server calculates the hash of the key and checks with the database
+ 3. If the login succeeds, it calculates a second hash (different algorithm) and keeps it private
+ 4. The server generates a token and sends it to the client
 
 ```
        Client
