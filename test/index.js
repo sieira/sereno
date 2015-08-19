@@ -3,7 +3,7 @@ var should = require('chai').should(),
     UserKey = require('../lib/userKey'),
     PrivateDataEncrypter = require('../lib/privateDataEncrypter'),
     LocalStrategy = require('passport-local').Strategy,
-    SerenoStrategy = require('../lib').Strategy,
+    SerenoStrategy = require('../lib').init(LocalStrategy),
     http = require('http');
 
 var message = "En un lugar de la Mancha, de cuyo nombre no quiero acordarme, no ha mucho tiempo que vivía un hidalgo de los de lanza en astillero , adarga antigua, rocín flaco y galgo corredor . Una olla de algo más vaca que carnero, salpicón las más noches, duelos y quebrantos los sábados , lantejas los viernes, algún palomino de añadidura los domingos, consumían las tres partes de su hacienda . El resto della concluían sayo de velarte, calzas de velludo para las fiestas, con sus pantuflos de lo mesmo, y los días de entresemana se honraba con su vellorí de lo más fino. Tenía en su casa una ama que pasaba de los cuarenta, y una sobrina que no llegaba a los veinte, y un mozo de campo y plaza , que así ensillaba el rocín como tomaba la podadera. Frisaba la edad de nuestro hidalgo con los cincuenta años; era de complexión recia, seco de carnes, enjuto de rostro, gran madrugador y amigo de la caza. Quieren decir que tenía el sobrenombre de Quijada, o Quesada, que en esto hay alguna diferencia en los autores que deste caso escriben ; aunque, por conjeturas verosímiles, se deja entender que se llamaba Quejana. Pero esto importa poco a nuestro cuento; basta que en la narración dél no se salga un punto de la verdad. ",
@@ -98,9 +98,9 @@ describe('# Server ', function () {
     });
   });
 
-  it('Test server should request authentication calling a private area', function (done) {
+  it('Test server should redirect when calling a private area', function (done) {
       http.get('http://localhost:'+ port + '/private-data', function (res) {
-        res.statusCode.should.be.equal(200);
+        res.statusCode.should.be.equal(302);
         done();
       });
   });
@@ -115,8 +115,7 @@ describe('# Passport', function() {
     it('Register passport strategy : ', function() {
       var passport = require('passport');
 
-      passport.use(new SerenoStrategy(new LocalStrategy(
-        function(username, password, done) {
+      passport.use(new SerenoStrategy(function(username, password, done) {
           User.findOne({ username: username }, function (err, user) {
             if (err) { return done(err); }
             if (!user) {
@@ -127,6 +126,6 @@ describe('# Passport', function() {
             }
             return done(null, user);
           });
-        })));
+        }));
     });
 });
