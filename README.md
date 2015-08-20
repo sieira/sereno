@@ -37,6 +37,9 @@ The algorithm used to encrypt this information will be AES.
 # Weak points
 Please, report any problem you can think of about this strategy
 
+# Howto
+For common use-cases refer to the [how-to](doc/howto.md)
+
 ## Release History
 
 * 0.0.1 Initial release
