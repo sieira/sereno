@@ -44,6 +44,12 @@ For common use-cases refer to the [how-to](doc/howto.md)
 
 * 0.0.1 Initial release
 
+## Credits
+
+ * [Luis Sieira](https://github.com/sieira)
+ * [Jared Hanson](https://github.com/jaredhanson)
+   * From whom the code in ./lib/utils.js has been taken
+   
 ## License
 Copyright [2015] [Luis Sieira Garcia]
 
