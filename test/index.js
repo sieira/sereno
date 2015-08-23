@@ -14,7 +14,7 @@ var should = require('chai').should(),
  * Chryptography stuff
  **/
 var SessionKey = require('../lib/sessionKey'),
-    UserKey = require('../lib/userKey'),
+    userKeyGenerator = require('../lib/crypto/userKeyGenerator'),
     PrivateDataEncrypter = require('../lib/privateDataEncrypter');
 
 /**
@@ -62,6 +62,7 @@ var server = require('./server'),
  * Strategy
  **/
 passport.serializeUser(function(user, done) {
+  console.log('USER->'+user);
   done(null, user);
 });
 
@@ -120,28 +121,28 @@ describe('# SessionKey', function() {
 });
 describe('# UserKey', function() {
   it('The same message has to give equal hashes', function() {
-    var hash1 = UserKey.hash(message);
-    var hash2 = UserKey.hash(message);
+    var hash1 = userKeyGenerator.hash(message);
+    var hash2 = userKeyGenerator.hash(message);
 
     hash1.should.be.equal(hash2);
   });
 
   it('The hash should be 128 Bytes long', function() {
-    var hash = UserKey.hash(message);
+    var hash = userKeyGenerator.hash(message);
 //TODO    hash.length.should.be.equal(128);
   });
 });
 
 describe('# Private-data encrypter', function() {
   it('The message and the encrypted message have to be different', function() {
-    var hash = UserKey.hash(password),
+    var hash = userKeyGenerator.hash(password),
         encryptedMessage = PrivateDataEncrypter.encrypt(hash, message);
 
     message.should.not.be.equal(encryptedMessage);
   });
 
   it('The message and the dencrypted message has to be the original message', function() {
-    var hash = UserKey.hash(password),
+    var hash = userKeyGenerator.hash(password),
         encryptedMessage = PrivateDataEncrypter.encrypt(hash, message),
         redecryptedMessage = PrivateDataEncrypter.decrypt(hash, encryptedMessage);
 
