@@ -1,3 +1,5 @@
+'use strict'
+
 /**
  * Dependencies
  */
@@ -5,6 +7,7 @@ var should = require('chai').should(),
     LocalStrategy = require('passport-local').Strategy,
     SerenoStrategy = require('../lib').init(LocalStrategy),
     http = require('http'),
+    passport = require('passport'),
     querystring = require('querystring');
 
 /**
@@ -58,14 +61,22 @@ var server = require('./server'),
 /**
  * Strategy
  **/
- var serenoLocalStrategy = new SerenoStrategy(
-   function(username, password, done) {
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.deserializeUser(function(user, done) {
+  done(null, user);
+});
+
+var serenoLocalStrategy = new SerenoStrategy(
+   function (username, password, done) {
      User.findOne({ username: username }, function(err, user) {
        if (err) { return done(err); }
        if (!user) {
          return done(null, false, { message: 'Incorrect username.' });
        }
-       if (!user.validPassword(password)) {
+       if (!user.password === password) {
          return done(null, false, { message: 'Incorrect password.' });
        }
        return done(null, user);
@@ -73,13 +84,12 @@ var server = require('./server'),
    }
  );
 
-
 describe('# SessionKey', function() {
   var sessionKey = new SessionKey(),
       sessionKey1 = sessionKey,
       sessionKey2 = new SessionKey();
 
-  it('The message and it\'s encrypted version have to be different', function() {
+  it('The message and its encrypted version have to be different', function() {
         var encryptedMessage = sessionKey.encrypt(message);
 
         message.should.not.be.equal(encryptedMessage);
@@ -140,10 +150,11 @@ describe('# Private-data encrypter', function() {
 });
 
 describe("# Database", function() {
-  //TODO add user   { username: user, password : password }
+  /**
+   * Start and clear the database
+   */
   before(function(done) {
     if (mongoose.connection.db) return done();
-
     mongoose.connect(dbURI, done);
   });
 
@@ -156,36 +167,46 @@ describe("# Database", function() {
   });
 
   it("Should refuse to add the same user twice", function(done) {
-    new User({ username: user, password : password }).save(done);
-    // TODO add should.fail()
-//    new User({ username: user, password : password }).save(done);
+    new User({ username: user, password : password }).save();
+
+    try {
+      new User({ username: user, password : password }).save();
+      should.fail('The database accepted to add a duplicate entry');
+    }
+    catch(err) {
+      err.should.be.instanceof(Error);
+      done();
+    }
   });
 
   it("Should be able to retrieve users", function(done) {
-    new User({ username: user, password : password }).save(done);
+    new User({ username: user, password : password }).save(function(err, model){
+      if (err) return done(err);
 
-     User.find({}, function(err, models){
-      should.not.exist(err);
-      models.should.have.length(1);
-      console.log(models);
-
-      done();
-     });
+      new User({ username: wronguser, password : wrongpassword }).save(function(err, model){
+        if (err) return done(err);
+        User.find({}, function(err, docs){
+          if (err) return done(err);
+          docs.length.should.equal(2);
+          done();
+        });
+      });
+    });
   });
 
   it("can clear the DB on demand", function(done) {
-    User.count(function(err, count){
-      err.should.not.exist;
-      count.should.be.equal.to(1);
+    new User({ username: user, password : password }).save(function(err, model){
+      User.count(function(err, count){
+        should.not.exist(err);
+        count.should.be.equal(1);
 
-      clearDB(function(err){
-        expect(err).to.not.exist;
-
-        User.find({}, function(err, docs){
-          expect(err).to.not.exist;
-
-          expect(docs.length).to.equal(0);
-          done();
+        clearDB(function(err){
+          should.not.exist(err);
+          User.find({}, function(err, docs){
+            should.not.exist(err);
+            docs.length.should.equal(0);
+            done();
+          });
         });
       });
     });
@@ -218,11 +239,25 @@ describe('# Passport', function() {
 });
 
 describe('# Test server ', function () {
+  /**
+   * Start and clear the database
+   */
+  before(function(done) {
+    if (mongoose.connection.db) return done();
+    mongoose.connect(dbURI, done);
+  });
+
+  before(function(done) {
+    clearDB(done);
+  });
+  /**
+   * Start and stop the server
+   */
   before(function () {
     server.listen(port);
   });
   after(function () {
-//TODO    server.close();
+    server.close();
   });
 
   it('Test server should return 200 when calling it', function (done) {
@@ -239,15 +274,51 @@ describe('# Test server ', function () {
       });
   });
 
-    it('Require passport', function() {
-      var passport = require('passport');
-      passport.should.not.be.null;
+  it('Require passport', function() {
+    var passport = require('passport');
+    passport.should.not.be.null;
+  });
+
+  it('Login with bad credentials should redirect to login', function(done) {
+    server.setStrategy(serenoLocalStrategy);
+
+    var postData = querystring.stringify({
+      username : wronguser,
+      password : wrongpassword
     });
 
-    it('Login with bad credentials should redirect', function() {
-          postData = querystring.stringify({
-          username : wronguser,
-          password : wrongpassword
+    var options = {
+      hostname: hostname,
+      port: port,
+      path: '/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': postData.length
+      }
+    };
+
+    var req = http.request(options, function(res) {
+      res.statusCode.should.equal(302);
+      res.headers.location.should.equal('/login');
+      done();
+    });
+
+    req.on('error', function(e) {
+      should.fail('problem with request: ' + e.message);
+    });
+
+    req.write(postData);
+    req.end();
+  });
+
+  it('Login with proper credentials should redirect to home', function(done) {
+    new User({ username: user, password : password }).save(function(err, model) {
+      server.setStrategy(serenoLocalStrategy);
+
+      var postData = querystring.stringify({
+        username : user,
+        password : password
       });
 
       var options = {
@@ -262,19 +333,17 @@ describe('# Test server ', function () {
       };
 
       var req = http.request(options, function(res) {
-        console.log('STATUS: ' + res.statusCode);
-        console.log('HEADERS: ' + JSON.stringify(res.headers));
-        res.setEncoding('utf8');
-        res.on('data', function (chunk) {
-          console.log('BODY: ' + chunk);
-        });
+        res.statusCode.should.equal(302);
+        res.headers.location.should.equal('/');
+        done();
       });
 
       req.on('error', function(e) {
-        console.log('problem with request: ' + e.message);
+        should.fail('problem with request: ' + e.message);
       });
 
       req.write(postData);
       req.end();
     });
+  });
 });

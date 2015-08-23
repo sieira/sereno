@@ -1,9 +1,12 @@
+'use strict'
+
 var http = require('http'),
     express = require('express'),
     passport = require('passport'),
     bodyParser = require('body-parser'),
     LocalStrategy = require('passport-local').Strategy;
 
+var server;
 
 var SerenoStrategy = require('../lib').init(LocalStrategy);
 
@@ -11,10 +14,15 @@ var SerenoStrategy = require('../lib').init(LocalStrategy);
 // Dummy strategy (it will be overwritten from the tests)
 var serenoLocalStrategy = new SerenoStrategy(function(username, password, done) {});
 
-function mockEndpoint(req,res) {
-  res.status(200).json({ message: 'tout va bien' });
+function mockEndpoint(status,message) {
+    return function (req,res) {
+      res.status(status).json({ message: message });
+    }
 }
 
+function setStrategy(Strategy) {
+  passport.use(Strategy);
+}
 
 function listen(port) {
   var app = express();
@@ -30,26 +38,29 @@ function listen(port) {
 
   app.set('port', process.env.PORT || port);
 
-  passport.use(serenoLocalStrategy);
+  app.get('/private-data', passport.authenticate('sereno', { failureRedirect: '/login' }),  mockEndpoint(200,"tout va bien"));
 
-  app.get('/private-data', passport.authenticate('sereno', { successRedirect: '/',
-                                   failureRedirect: '/login' }));
+  app.post('/login', passport.authenticate('sereno', { successRedirect: '/', failureRedirect: '/login' }));
+  //app.post('/login', mockEndpoint(401,"Thou shall not pass"));
 
-  app.post('/login', passport.authenticate('sereno'), mockEndpoint);
-
-  app.get('*', mockEndpoint);
+  app.get('*', mockEndpoint(200,"Tout se passe comme il faut"));
   app.post('*', function(req,res) {
     res.status(404).json({ message: 'unknown request' });
   });
 
   // Start it up!
-  http.createServer(app).listen(app.get('port'), function(){
+  server = http.createServer(app).listen(app.get('port'), function(){
     console.log('Express server listening on port ' + app.get('port'));
   })
 };
 
 //TODO gracefully close connection (deleting all the stored keys)
+function close() {
+  server.close();
+}
 
 module.exports = {
-  listen: listen
+  setStrategy : setStrategy,
+  listen: listen,
+  close: close
 };
