@@ -15,7 +15,7 @@ var should = require('chai').should(),
  **/
 var SessionKey = require('../lib/sessionKey'),
     userKeyGenerator = require('../lib/crypto/userKeyGenerator'),
-    PrivateDataEncrypter = require('../lib/privateDataEncrypter');
+    PrivateDataEncrypter = require('../lib/crypto/privateDataEncrypter');
 
 /**
  * Sample messages
@@ -62,7 +62,6 @@ var server = require('./server'),
  * Strategy
  **/
 passport.serializeUser(function(user, done) {
-  console.log('USER->'+user);
   done(null, user);
 });
 
@@ -336,6 +335,68 @@ describe('# Test server ', function () {
       var req = http.request(options, function(res) {
         res.statusCode.should.equal(302);
         res.headers.location.should.equal('/');
+        done();
+      });
+
+      req.on('error', function(e) {
+        should.fail('problem with request: ' + e.message);
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  });
+});
+
+describe('# Sereno: Here is where the fun starts ', function () {
+  /**
+   * Start and clear the database
+   */
+  before(function(done) {
+    if (mongoose.connection.db) return done();
+    mongoose.connect(dbURI, done);
+  });
+
+  before(function(done) {
+    clearDB(done);
+  });
+  /**
+   * Start and stop the server
+   */
+  before(function () {
+    server.listen(port);
+  });
+  after(function () {
+    server.close();
+  });
+
+  var encryptedMessage;
+
+  it('Requesting an encrypted message', function(done) {
+    new User({ username: user, password : password }).save(function(err, model) {
+      server.setStrategy(serenoLocalStrategy);
+
+      var postData = querystring.stringify({
+        username : user,
+        password : password,
+        message : message
+      });
+
+      var options = {
+        hostname: hostname,
+        port: port,
+        path: '/encrypt',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': postData.length
+        }
+      };
+
+      var req = http.request(options, function(res) {
+        res.statusCode.should.equal(200);
+        encryptedMessage = res.headers.encryptedMessage;
+        encryptedMessage.should.not.equal(message);
         done();
       });
 

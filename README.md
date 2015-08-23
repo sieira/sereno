@@ -9,8 +9,6 @@ Sereno is intended to extend [passport](http://passportjs.org/)'s functionality,
 
 https://github.com/chengxianga2008/node-cryptojs-aes
 
-Sereno is conceived to act as a middleware in NodeJS, using express and mongoose.
-
 The archetypal use-case is an unified mail inbox, where some user will need to keep a list of all the users and passwords associated to his personal addresses.
 Those passwords have to be kept safe, but the original information should be retrievable.
 
@@ -49,7 +47,7 @@ For common use-cases refer to the [how-to](doc/howto.md)
  * [Luis Sieira](https://github.com/sieira)
  * [Jared Hanson](https://github.com/jaredhanson)
    * From whom the code in ./lib/utils.js has been taken
-   
+
 ## License
 Copyright [2015] [Luis Sieira Garcia]
 
