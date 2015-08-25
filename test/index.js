@@ -395,7 +395,7 @@ describe('# Sereno: Here is where the fun starts ', function () {
 
       var req = http.request(options, function(res) {
         res.statusCode.should.equal(200);
-        encryptedMessage = res.headers.encryptedMessage;
+        encryptedMessage = res.message;
         encryptedMessage.should.not.equal(message);
         done();
       });
