@@ -395,13 +395,17 @@ describe('# Sereno: Here is where the fun starts ', function () {
 
       var req = http.request(options, function(res) {
         res.statusCode.should.equal(200);
-        encryptedMessage = res.message;
-        encryptedMessage.should.not.equal(message);
-        done();
+
+        res.on('data', function(data) {
+          encryptedMessage = JSON.parse(data).message;
+          encryptedMessage.should.not.equal(message);
+          done();
+        });
       });
 
       req.on('error', function(e) {
         should.fail('problem with request: ' + e.message);
+        done();
       });
 
       req.write(postData);
