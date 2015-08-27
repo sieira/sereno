@@ -44,7 +44,7 @@ function listen(port) {
 
 //TODO you shouldn't need to instantiate a sereno strategy; there should be static stuff for that
   app.post('/encrypt', passport.authenticate('sereno'), serenoLocalStrategy.encrypt);
-//TODO  app.post('/decrypt', passport.authenticate('sereno'), SerenoStrategy.decrypt);
+  app.post('/decrypt', passport.authenticate('sereno'), serenoLocalStrategy.decrypt);
 
   //app.post('/login', mockEndpoint(401,"Thou shall not pass"));
 

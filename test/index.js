@@ -412,4 +412,45 @@ describe('# Sereno: Here is where the fun starts ', function () {
       req.end();
     });
   });
+
+  it('Decrypt the encrypted message', function(done) {
+    new User({ username: user, password : password }).save(function(err, model) {
+      server.setStrategy(serenoLocalStrategy);
+
+      var postData = querystring.stringify({
+        username : user,
+        password : password,
+        message : encryptedMessage
+      });
+
+      var options = {
+        hostname: hostname,
+        port: port,
+        path: '/decrypt',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': postData.length
+        }
+      };
+
+      var req = http.request(options, function(res) {
+        res.statusCode.should.equal(200);
+
+        res.on('data', function(data) {
+          var decryptedMessage = JSON.parse(data).message;
+          decryptedMessage.should.equal(message);
+          done();
+        });
+      });
+
+      req.on('error', function(e) {
+        should.fail('problem with request: ' + e.message);
+        done();
+      });
+
+      req.write(postData);
+      req.end();
+    });
+  });
 });
