@@ -11,7 +11,7 @@ var server;
 var SerenoStrategy = require('../lib').init(LocalStrategy);
 
 
-// Dummy strategy (it will be overwritten from the tests)
+// TODO Dummy strategy (it will be overwritten from the tests)
 var serenoLocalStrategy = new SerenoStrategy(function(username, password, done) {});
 
 function mockEndpoint(status,message) {
