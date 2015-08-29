@@ -40,6 +40,7 @@ For common use-cases refer to the [how-to](doc/howto.md)
 
 ## Release History
 
+* 0.0.2 Sereno can now encrypt and decrypt with a sessionless LocalStrategy
 * 0.0.1 Initial release
 
 ## Credits
