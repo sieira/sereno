@@ -1,4 +1,4 @@
-# How am I suppossed to use sereno
+# How am I supposed to use sereno
 Sereno will not make any authentication, login or session stuff. It will delegate in another strategy for that purpose.
 sereno is designed as a Strategy factory.
 
