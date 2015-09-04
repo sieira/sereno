@@ -37,6 +37,7 @@
     "passport": "^0.2.2",
     "passport-local": "^1.0.0",
     "passport-strategy": "^1.0.0",
-    "request": "^2.61.0"
+    "request": "^2.61.0",
+    "should": "^7.1.0"
   }
 }

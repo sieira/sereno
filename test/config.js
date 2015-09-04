@@ -42,7 +42,7 @@ new mongoose.Schema({
     required: true
   }
 })),
-config.mongo.clearDB  = mocha_mongoose(config.mongo.dbURI),
+config.mongo.clearDB  = mocha_mongoose(config.mongo.dbURI,{noClear: true}),
 config.mongo.connectDB = function(callback) {
   if (mongoose.connection.db) return callback();
   mongoose.connect(config.mongo.dbURI, callback);
@@ -75,7 +75,28 @@ passport.deserializeUser(function(user, done) {
 });
 
 config.strategy = {},
-config.strategy.serenoLocalStrategy = new SerenoStrategy(
+config.strategy.SerenoLocalStrategy = new SerenoStrategy({
+    //TODO adapt it so it can use different names for the username and password fields
+    session: false
+  },
+  function (username, password, done) {
+    config.mongo.User.findOne({ username: username }, function(err, user) {
+      if (err) {console.log('error');  return done(err); }
+
+      if (!user) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+      if (!user.password === password) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+      return done(null, user);
+    });
+  }
+),
+config.strategy.SessionLocalStrategy = new SerenoStrategy(
+  {
+    session: true
+  },
    function (username, password, done) {
      config.mongo.User.findOne({ username: username }, function(err, user) {
        if (err) { return done(err); }

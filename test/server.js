@@ -12,7 +12,7 @@ var SerenoStrategy = require('../lib').init(LocalStrategy);
 
 
 // TODO Dummy strategy (it will be overwritten from the tests)
-var serenoLocalStrategy = new SerenoStrategy(function(username, password, done) {});
+var LocalStrategy = new SerenoStrategy(function(username, password, done) {});
 
 function mockEndpoint(status,message) {
     return function (req,res) {
@@ -24,7 +24,7 @@ function setStrategy(Strategy) {
   passport.use(Strategy);
 }
 
-function listen(port) {
+function listen(port, callback) {
   var app = express();
 
   // parse application/x-www-form-urlencoded
@@ -34,6 +34,8 @@ function listen(port) {
   app.use(bodyParser.json());
 
   app.use(passport.initialize());
+  app.use(passport.session());
+
   var router = express.Router();
 
   app.set('port', process.env.PORT || port);
@@ -43,8 +45,8 @@ function listen(port) {
   app.post('/login', passport.authenticate('sereno', { successRedirect: '/', failureRedirect: '/login' }));
 
 //TODO you shouldn't need to instantiate a sereno strategy; there should be static stuff for that
-  app.post('/encrypt', passport.authenticate('sereno'), serenoLocalStrategy.encrypt);
-  app.post('/decrypt', passport.authenticate('sereno'), serenoLocalStrategy.decrypt);
+  app.post('/encrypt', passport.authenticate('sereno'), LocalStrategy.encrypt);
+  app.post('/decrypt', passport.authenticate('sereno'), LocalStrategy.decrypt);
 
   //app.post('/login', mockEndpoint(401,"Thou shall not pass"));
 
@@ -56,12 +58,13 @@ function listen(port) {
   // Start it up!
   server = http.createServer(app).listen(app.get('port'), function(){
     console.log('Express server listening on port ' + app.get('port'));
+    if(callback) return callback();
   })
 };
 
 //TODO gracefully close connection (deleting all the stored keys)
-function close() {
-  server.close();
+function close(callback) {
+  server.close(callback);
 }
 
 module.exports = {
