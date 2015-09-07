@@ -1,5 +1,8 @@
 'use strict';
 
+/**
+ * Import
+ */
 var mongoose = require('mongoose'),
     passport = require('passport'),
     mocha_mongoose = require('mocha-mongoose'),

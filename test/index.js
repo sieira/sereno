@@ -5,7 +5,7 @@
  */
 var should = require('chai').should(),
     config = require('./config'),
-    http = require('http'),
+    request = require('request'),
     passport = require('passport'),
     server = require('./server'),
     querystring = require('querystring');
@@ -120,7 +120,7 @@ describe("# Database", function() {
     try {
       new User({ username: user, password : password }).save(function(err, model) {
         if(err) done();
-        should.fail('The database accepted to add a duplicate entry');
+        should.fail(0,1,'The database accepted to add a duplicate entry');
       });
     }
     catch(err) {
@@ -205,14 +205,22 @@ describe('# Test server ', function () {
   });
 
   it('Test server should return 200 when calling it', function (done) {
-    http.get('http://'+ hostname +':'+ port, function (res) {
+    request
+      .get('http://' + hostname + ':' + port)
+      .on('response', function(res) {
       res.statusCode.should.be.equal(200);
       done();
     });
   });
 
   it('Test server should redirect when calling a private area', function (done) {
-      http.get('http://'+ hostname +':'+ port + '/private-data', function (res) {
+    var options = {
+      uri: 'http://'+ hostname +':'+ port + '/private-data',
+      followRedirect: false
+    };
+
+    request(options)
+      .on('response', function (res) {
         res.statusCode.should.be.equal(302);
         done();
       });
@@ -225,28 +233,19 @@ describe('# Test server ', function () {
     });
 
     var options = {
-      hostname: hostname,
-      port: port,
-      path: '/login',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': postData.length
-      }
+      uri: 'http://' + hostname + ':' + port  + '/login'
     };
 
-    var req = http.request(options, function(res) {
-      res.statusCode.should.equal(302);
-      res.headers.location.should.equal('/login');
-      done();
-    });
-
-    req.on('error', function(e) {
-      should.fail('problem with request: ' + e.message);
-    });
-
-    req.write(postData);
-    req.end();
+    request.post(options)
+      .form(postData)
+      .on('response', function(res) {
+        res.statusCode.should.equal(302);
+        res.headers.location.should.equal('/login');
+        done();
+      })
+      .on('error', function(e) {
+        should.fail(0,1,'Problem with request: ' + e.message);
+      });
   });
 
   it('Login with proper credentials should redirect to home', function(done) {
@@ -256,28 +255,19 @@ describe('# Test server ', function () {
       });
 
       var options = {
-        hostname: hostname,
-        port: port,
-        path: '/login',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Content-Length': postData.length
-        }
+        uri: 'http://' + hostname + ':' + port + '/login'
       };
 
-      var req = http.request(options, function(res) {
-        res.statusCode.should.equal(302);
-        res.headers.location.should.equal('/');
-        done();
-      });
-
-      req.on('error', function(e) {
-        should.fail('problem with request: ' + e.message);
-      });
-
-      req.write(postData);
-      req.end();
+      request.post(options)
+        .form(postData)
+        .on('response', function(res) {
+          res.statusCode.should.equal(302);
+          res.headers.location.should.equal('/');
+          done();
+        })
+        .on('error', function(e) {
+          should.fail(0,1,'Problem with request: ' + e.message);
+        });
     });
 });
 
@@ -314,95 +304,106 @@ describe('# Sereno: Here is where the fun starts ', function () {
   });
 
   describe('Local Strategy (no Session)', function() {
-    var encryptedMessage;
+    var encryptedMessage,
+        decryptedMessage;
+
+    /**
+     * Register strategy
+     */
+    before(function (done) {
+      server.setStrategy(SerenoLocalStrategy);
+      done();
+    });
 
     it('Requesting an encrypted message', function(done) {
-        server.setStrategy(SerenoLocalStrategy);
-
-        var postData = querystring.stringify({
+      var postData = querystring.stringify({
           username : user,
           password : password,
           message : message
-        });
+      });
 
-        var options = {
-          hostname: hostname,
-          port: port,
-          path: '/encrypt',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': postData.length
-          }
-        };
+      var options = {
+        uri: 'http://' + hostname + ':' + port +  '/encrypt'
+      };
 
-        var req = http.request(options, function(res) {
+      request.post(options)
+        .form(postData)
+        .on('response', function(res) {
           res.statusCode.should.equal(200);
-
-          res.on('data', function(data) {
-            encryptedMessage = JSON.parse(data).message;
-            encryptedMessage.should.not.equal(message);
-            done();
-          });
-        });
-
-        req.on('error', function(e) {
-          should.fail(0,1,'problem with request: ' + e.message);
+        })
+        .on('data',function(data) {
+          encryptedMessage = JSON.parse(data).message;
+          encryptedMessage.should.not.equal(message);
           done();
-        });
-
-        req.write(postData);
-        req.end();
+        })
+        .on('error', function(e) {
+          should.fail(0,1,'Problem with request: ' + e.message);
+      });
     });
 
     it('Decrypt the encrypted message', function(done) {
-      new User({ username: user, password : password }).save(function(err, model) {
-        server.setStrategy(SerenoLocalStrategy);
-
-        var postData = querystring.stringify({
+      var postData = querystring.stringify({
           username : user,
           password : password,
           message : encryptedMessage
         });
 
-        var options = {
-          hostname: hostname,
-          port: port,
-          path: '/decrypt',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': postData.length
-          }
-        };
+       var options = {
+           uri: 'http://' + hostname + ':' + port +  '/decrypt'
+       };
 
-        var req = http.request(options, function(res) {
-          res.statusCode.should.equal(200);
-
-          res.on('data', function(data) {
-            var decryptedMessage = JSON.parse(data).message;
-            decryptedMessage.should.equal(message);
-            done();
-          });
-        });
-
-        req.on('error', function(e) {
-          should.fail(0,1,'problem with request: ' + e.message);
-          done();
-        });
-
-        req.write(postData);
-        req.end();
-      });
+       request.post(options)
+         .form(postData)
+         .on('response', function(res) {
+           res.statusCode.should.equal(200);
+         })
+         .on('data',function(data) {
+           decryptedMessage = JSON.parse(data).message;
+           decryptedMessage.should.equal(message);
+           done();
+         })
+         .on('error', function(e) {
+           should.fail(0,1,'Problem with request: ' + e.message);
+       });
     });
   });
 
   describe('Local Strategy (With session)', function() {
     var token;
 
-    it('Login', function(done) {
-      should.fail(0,1,'Test not implemented');
+    /**
+     * Register strategy
+     */
+    before(function (done) {
+      server.setStrategy(SessionLocalStrategy);
       done();
+    });
+
+    it('Login should redirect to home and return a user token', function(done) {
+      var postData = querystring.stringify({
+        username : user,
+        password : password
+      });
+
+      var options = {
+        uri: 'http://' + hostname + ':' + port +  '/login',
+        followAllRedirects: true
+      };
+
+      request.post(options)
+        .form(postData)
+        .on('response', function(res) {
+          res.statusCode.should.equal(200);
+        })
+        .on('data',function(data) {
+          console.log(JSON.parse(data));
+          should.exist(data);
+          should.fail(0,1,'Test not implemented');
+          done();
+        })
+        .on('error', function(e) {
+          should.fail(0,1,'Problem with request: ' + e.message);
+      });
     });
 
     it('Encrypt', function(done) {
