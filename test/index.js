@@ -387,16 +387,17 @@ describe('# Sereno: Here is where the fun starts ', function () {
 
       var options = {
         uri: 'http://' + hostname + ':' + port +  '/login',
-        followAllRedirects: true
+        followRedirect: false
       };
 
       request.post(options)
         .form(postData)
         .on('response', function(res) {
-          res.statusCode.should.equal(200);
+          res.statusCode.should.equal(302);
+          console.log(res.headers);
         })
         .on('data',function(data) {
-          console.log(JSON.parse(data));
+          console.log(data.toString());
           should.exist(data);
           should.fail(0,1,'Test not implemented');
           done();

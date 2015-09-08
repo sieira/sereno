@@ -70,11 +70,14 @@ config.server.port = 2409;
  * Strategy
  **/
 passport.serializeUser(function(user, done) {
-  done(null, user);
+  //TODO this should go to sereno
+  done(null, user.id);
 });
 
-passport.deserializeUser(function(user, done) {
-  done(null, user);
+passport.deserializeUser(function(id, done) {
+  User.findById(id, function(err, user) {
+    done(err, user);
+  });
 });
 
 config.strategy = {},
@@ -89,7 +92,7 @@ config.strategy.SerenoLocalStrategy = new SerenoStrategy({
       if (!user) {
         return done(null, false, { message: 'Incorrect username.' });
       }
-      if (!user.password === password) {
+      if (user.password !== password) {
         return done(null, false, { message: 'Incorrect password.' });
       }
       return done(null, user);

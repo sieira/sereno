@@ -30,9 +30,7 @@ function listen(port, callback) {
 
   // parse application/json
   app.use(bodyParser.json());
-
   app.use(passport.initialize());
-  app.use(passport.session());
 
   app.set('port', process.env.PORT || port);
 
@@ -46,10 +44,9 @@ function listen(port, callback) {
 
   //app.post('/login', mockEndpoint(401,"Thou shall not pass"));
 
-  app.get('*', mockEndpoint(200,"Tout se passe comme il faut"));
-  app.post('*', function(req,res) {
-    res.status(404).json({ message: 'unknown request' });
-  });
+  app.get('/', mockEndpoint(200,'Index'));
+  app.get('*', mockEndpoint(404,'OOOOPS'));
+  app.post('*', mockEndpoint(404,'unknown request'));
 
   // Start it up!
   server = http.createServer(app).listen(app.get('port'), function(){
