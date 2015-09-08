@@ -109,7 +109,7 @@ config.strategy.SessionLocalStrategy = new SerenoStrategy(
        if (!user) {
          return done(null, false, { message: 'Incorrect username.' });
        }
-       if (!user.password === password) {
+       if (user.password !== password) {
          return done(null, false, { message: 'Incorrect password.' });
        }
        return done(null, user);
