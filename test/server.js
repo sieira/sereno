@@ -11,6 +11,7 @@ var server;
 var app = express();
 
 var SerenoStrategy = require('../lib');
+var isSessionEnabled = false;
 
 
 function mockEndpoint(status,message) {
@@ -35,17 +36,30 @@ function genuuid(req) {
   return "Test UID";
 }
 
-function listen(port, callback) {
+function listen(options, callback) {
   var router = express.Router();
 
   // parse application/x-www-form-urlencoded
   app.use(bodyParser.urlencoded({ extended: false }));
+  console.log(options.enableSession)
+  if(options.enableSession) {
+      console.log("Session enabled, adding session middleware")
+      app.use(session({
+          genid: function (req) {
+              return genuuid() // use UUIDs for session IDs
+          },
+          secret: "somethingSecret",
+          cookie: {maxAge: 60000},
+          resave: true,
+          saveUninitialized: false
+      }));
+  }
 
   // parse application/json
   app.use(bodyParser.json());
   app.use(passport.initialize());
 
-  app.set('port', process.env.PORT || port);
+  app.set('port', process.env.PORT || options.port);
 
   app.get('/private-data', passport.authenticate('sereno', { failureRedirect: '/login' }),  mockEndpoint(200,"tout va bien"));
 

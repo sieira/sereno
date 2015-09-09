@@ -182,7 +182,7 @@ describe('# Test server ', function () {
    * Start the server
    */
   before(function (done) {
-    server.listen(port, done);
+    server.listen({port: port}, done);
   });
   /**
    * Register strategy
@@ -290,29 +290,23 @@ describe('# Sereno: Here is where the fun starts ', function () {
   before(function(done) {
     new User({ username: user, password : password }).save(done);
   });
-  /**
-   * Start the server
-   */
-  before(function (done) {
-    server.listen(port, done);
-  });
-  /**
-   * Stop the server
-   **/
-  after(function () {
-    server.close();
-  });
 
   describe('Local Strategy (no Session)', function() {
     var encryptedMessage,
         decryptedMessage;
 
     /**
-     * Register strategy
+     * Start the server
      */
     before(function (done) {
       server.setStrategy(SerenoLocalStrategy);
-      done();
+      server.listen({port: port, enableSession: true}, done);
+    });
+    /**
+     * Stop the server
+     **/
+    after(function () {
+      server.close();
     });
 
     it('Requesting an encrypted message', function(done) {
@@ -372,12 +366,17 @@ describe('# Sereno: Here is where the fun starts ', function () {
     var token;
 
     /**
-     * Register strategy
+     * Start the server
      */
     before(function (done) {
       server.setStrategy(SessionLocalStrategy);
-      server.enableSession();
-      done();
+      server.listen({port: port, enableSession: true}, done);
+    });
+    /**
+     * Stop the server
+     **/
+    after(function () {
+      server.close();
     });
 
     it('Login should redirect to home and return a user token', function(done) {
