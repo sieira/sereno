@@ -30,6 +30,7 @@
     "body-parser": "^1.13.3",
     "chai": "^3.2.0",
     "express": "^4.13.3",
+    "express-session": "^1.11.3",
     "mocha": "^2.2.5",
     "mocha-mongoose": "^1.1.0",
     "mongodb": "^2.0.42",

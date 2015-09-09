@@ -376,6 +376,7 @@ describe('# Sereno: Here is where the fun starts ', function () {
      */
     before(function (done) {
       server.setStrategy(SessionLocalStrategy);
+      server.enableSession();
       done();
     });
 
