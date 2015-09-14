@@ -7,7 +7,7 @@ var should = require('chai').should(),
     config = require('./config'),
     request = require('request'),
     passport = require('passport'),
-    server = require('./server'),
+    Server = require('./server'),
     querystring = require('querystring');
 
 /**
@@ -160,6 +160,7 @@ describe("# Database", function() {
 });
 
 describe('# Test server ', function () {
+  var server = new Server({port: port})
   /**
    * Start the database
    */
@@ -182,7 +183,7 @@ describe('# Test server ', function () {
    * Start the server
    */
   before(function (done) {
-    server.listen({port: port}, done);
+    server.listen(done);
   });
   /**
    * Register strategy
@@ -292,6 +293,7 @@ describe('# Sereno: Here is where the fun starts ', function () {
   });
 
   describe('Local Strategy (no Session)', function() {
+    var server = new Server({port: port});
     var encryptedMessage,
         decryptedMessage;
 
@@ -300,7 +302,7 @@ describe('# Sereno: Here is where the fun starts ', function () {
      */
     before(function (done) {
       server.setStrategy(SerenoLocalStrategy);
-      server.listen({port: port, enableSession: true}, done);
+      server.listen(done);
     });
     /**
      * Stop the server
@@ -364,13 +366,14 @@ describe('# Sereno: Here is where the fun starts ', function () {
 
   describe('Local Strategy (With session)', function() {
     var token;
+    var server = new Server({port: port, enableSession: true});
 
     /**
      * Start the server
      */
     before(function (done) {
       server.setStrategy(SessionLocalStrategy);
-      server.listen({port: port, enableSession: true}, done);
+      server.listen(done);
     });
     /**
      * Stop the server
