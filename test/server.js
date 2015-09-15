@@ -6,76 +6,90 @@ var http = require('http'),
     bodyParser = require('body-parser'),
     session = require('express-session'),
     LocalStrategy = require('passport-local').Strategy;
-
-var server;
-var app = express();
-
 var SerenoStrategy = require('../lib');
 
-
-function mockEndpoint(status,message) {
-    return function (req,res) {
-      res.status(status).json({ message: message });
+function mockEndpoint(status, message) {
+    return function (req, res) {
+        res.status(status).json({message: message});
     }
 }
 
-function setStrategy(Strategy) {
-  passport.use(Strategy);
-}
-
-function enableSession() {
-  // TODO This belongs to sereno. The secret should be randomly generated
-  // along with the server key
-  app.use(session({genid: function(req) {
-    return genuuid() // use UUIDs for session IDs
-  }, secret: "somethingSecret", cookie: { secure: true, maxAge: 60000 }, resave: false, saveUninitialized: true}));
-}
-
 function genuuid(req) {
-  return "Test UID";
+    return "Test UID";
 }
 
-function listen(port, callback) {
-  var router = express.Router();
+function Server(options) {
+    var app = express();
 
-  // parse application/x-www-form-urlencoded
-  app.use(bodyParser.urlencoded({ extended: false }));
+    var isSessionEnabled = false;
 
-  // parse application/json
-  app.use(bodyParser.json());
-  app.use(passport.initialize());
+    var server;
 
-  app.set('port', process.env.PORT || port);
+    this.setStrategy = function(Strategy) {
+        passport.use(Strategy);
+    }
 
-  app.get('/private-data', passport.authenticate('sereno', { failureRedirect: '/login' }),  mockEndpoint(200,"tout va bien"));
+    this.enableSession = function() {
+        // TODO This belongs to sereno. The secret should be randomly generated
+        // along with the server key
+        app.use(session({
+            genid: function (req) {
+                return genuuid() // use UUIDs for session IDs
+            }, secret: "somethingSecret", cookie: {secure: true, maxAge: 60000}, resave: false, saveUninitialized: true
+        }));
+    }
 
-  app.post('/login', passport.authenticate('sereno', { successRedirect: '/', failureRedirect: '/login' }));
+    this.listen = function(callback) {
+        var router = express.Router();
 
-//TODO you shouldn't need to instantiate a sereno strategy; there should be static stuff for that
-  app.post('/encrypt', passport.authenticate('sereno'), SerenoStrategy.encrypt);
-  app.post('/decrypt', passport.authenticate('sereno'), SerenoStrategy.decrypt);
+        // parse application/x-www-form-urlencoded
+        app.use(bodyParser.urlencoded({extended: false}));
+        console.log(options.enableSession)
+        if (options.enableSession) {
+            console.log("Session enabled, adding session middleware")
+            app.use(session({
+                genid: function (req) {
+                    return genuuid() // use UUIDs for session IDs
+                },
+                secret: "somethingSecret",
+                cookie: {maxAge: 60000},
+                resave: true,
+                saveUninitialized: false
+            }));
+        }
 
-  //app.post('/login', mockEndpoint(401,"Thou shall not pass"));
+        // parse application/json
+        app.use(bodyParser.json());
+        app.use(passport.initialize());
 
-  app.get('/', mockEndpoint(200,'Index'));
-  app.get('*', mockEndpoint(404,'OOOOPS'));
-  app.post('*', mockEndpoint(404,'unknown request'));
+        app.set('port', process.env.PORT || options.port);
 
-  // Start it up!
-  server = http.createServer(app).listen(app.get('port'), function(){
-    console.log('Express server listening on port ' + app.get('port'));
-    if(callback) return callback();
-  })
-};
+        app.get('/private-data', passport.authenticate('sereno', {failureRedirect: '/login'}), mockEndpoint(200, "tout va bien"));
 
-//TODO gracefully close connection (deleting all the stored keys)
-function close(callback) {
-  server.close(callback);
+        app.post('/login', passport.authenticate('sereno', {successRedirect: '/', failureRedirect: '/login'}));
+
+        //TODO you shouldn't need to instantiate a sereno strategy; there should be static stuff for that
+        app.post('/encrypt', passport.authenticate('sereno'), SerenoStrategy.encrypt);
+        app.post('/decrypt', passport.authenticate('sereno'), SerenoStrategy.decrypt);
+
+        //app.post('/login', mockEndpoint(401,"Thou shall not pass"));
+
+        app.get('/', mockEndpoint(200, 'Index'));
+        app.get('*', mockEndpoint(404, 'OOOOPS'));
+        app.post('*', mockEndpoint(404, 'unknown request'));
+
+        // Start it up!
+        server = http.createServer(app).listen(app.get('port'), function () {
+            console.log('Express server listening on port ' + app.get('port'));
+            if (callback) return callback();
+        })
+    };
+
+    //TODO gracefully close connection (deleting all the stored keys)
+    this.close = function(callback) {
+        server.close(callback);
+    }
 }
 
-module.exports = {
-  setStrategy : setStrategy,
-  listen: listen,
-  enableSession : enableSession,
-  close: close
-};
+
+module.exports = Server;

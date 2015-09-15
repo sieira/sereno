@@ -7,7 +7,7 @@ var should = require('chai').should(),
     config = require('./config'),
     request = require('request'),
     passport = require('passport'),
-    server = require('./server'),
+    Server = require('./server'),
     querystring = require('querystring');
 
 /**
@@ -160,6 +160,7 @@ describe("# Database", function() {
 });
 
 describe('# Test server ', function () {
+  var server = new Server({port: port})
   /**
    * Start the database
    */
@@ -182,7 +183,7 @@ describe('# Test server ', function () {
    * Start the server
    */
   before(function (done) {
-    server.listen(port, done);
+    server.listen(done);
   });
   /**
    * Register strategy
@@ -290,29 +291,24 @@ describe('# Sereno: Here is where the fun starts ', function () {
   before(function(done) {
     new User({ username: user, password : password }).save(done);
   });
-  /**
-   * Start the server
-   */
-  before(function (done) {
-    server.listen(port, done);
-  });
-  /**
-   * Stop the server
-   **/
-  after(function () {
-    server.close();
-  });
 
   describe('Local Strategy (no Session)', function() {
+    var server = new Server({port: port});
     var encryptedMessage,
         decryptedMessage;
 
     /**
-     * Register strategy
+     * Start the server
      */
     before(function (done) {
       server.setStrategy(SerenoLocalStrategy);
-      done();
+      server.listen(done);
+    });
+    /**
+     * Stop the server
+     **/
+    after(function () {
+      server.close();
     });
 
     it('Requesting an encrypted message', function(done) {
@@ -370,14 +366,20 @@ describe('# Sereno: Here is where the fun starts ', function () {
 
   describe('Local Strategy (With session)', function() {
     var token;
+    var server = new Server({port: port, enableSession: true});
 
     /**
-     * Register strategy
+     * Start the server
      */
     before(function (done) {
       server.setStrategy(SessionLocalStrategy);
-      server.enableSession();
-      done();
+      server.listen(done);
+    });
+    /**
+     * Stop the server
+     **/
+    after(function () {
+      server.close();
     });
 
     it('Login should redirect to home and return a user token', function(done) {
